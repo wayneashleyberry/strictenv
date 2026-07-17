@@ -40,11 +40,10 @@ missing env vars:
 Inspect the missing variables with `errors.As`:
 
 ```go
-var me *strictenv.MissingError
-if errors.As(err, &me) {
-	for _, m := range me.Missing {
-		fmt.Printf("missing: %s (field %s)\n", m.Env, m.Field)
-	}
+if me, ok := errors.AsType[*strictenv.MissingError](err); ok {
+    for _, m := range me.Missing {
+        fmt.Printf("missing: %s (field %s)\n", m.Env, m.Field)
+    }
 }
 ```
 
