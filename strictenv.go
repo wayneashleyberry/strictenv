@@ -66,6 +66,21 @@ func ParseFrom(dst any, env map[string]string) error {
 			val = os.Getenv(envKey)
 		}
 
+		if field.Type.Kind() == reflect.Pointer {
+			if val != "" {
+				inner := reflect.New(field.Type.Elem())
+				if err := setField(inner.Elem(), field.Type.Elem(), val); err != nil {
+					errs = append(errs, fmt.Errorf("%s (field %s): %w: %w", envKey, field.Name, ErrInvalidValue, err))
+
+					continue
+				}
+
+				v.Field(i).Set(inner)
+			}
+
+			continue
+		}
+
 		if val == "" {
 			errs = append(errs, fmt.Errorf("%s (field %s): %w", envKey, field.Name, ErrMissingValue))
 

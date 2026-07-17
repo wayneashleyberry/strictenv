@@ -7,6 +7,12 @@ type exampleConfig struct {
 	Port int    `env:"APP_PORT"`
 }
 
+type exampleOptionalConfig struct {
+	Host       string  `env:"APP_HOST"`
+	Port       int     `env:"APP_PORT"`
+	DBPassword *string `env:"DB_PASSWORD"`
+}
+
 func ExampleParseAsFrom() {
 	cfg, err := ParseAsFrom[exampleConfig](map[string]string{
 		"APP_HOST": "localhost",
@@ -56,4 +62,27 @@ func ExampleParseAsFrom_missingAndInvalidValues() {
 	// Output:
 	// APP_HOST (field Host): value is missing or empty
 	// APP_PORT (field Port): value is invalid: parse int: strconv.ParseInt: parsing "banana": invalid syntax
+}
+
+func ExampleParseAsFrom_optionalField() {
+	cfg, err := ParseAsFrom[exampleOptionalConfig](map[string]string{
+		"APP_HOST": "localhost",
+		"APP_PORT": "8080",
+	})
+	if err != nil {
+		fmt.Println("error:", err)
+
+		return
+	}
+
+	fmt.Printf("Host: %s\n", cfg.Host)
+
+	if cfg.DBPassword != nil {
+		fmt.Printf("DBPassword: %s\n", *cfg.DBPassword)
+	} else {
+		fmt.Println("DBPassword: not set")
+	}
+	// Output:
+	// Host: localhost
+	// DBPassword: not set
 }

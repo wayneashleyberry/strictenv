@@ -1,6 +1,6 @@
 # strictenv
 
-> Strict environment variable parsing for Go structs. No default values, no optional fields, no surprises.
+> Strict environment variable parsing for Go structs. No default values, no surprises.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/wayneashleyberry/strictenv.svg)](https://pkg.go.dev/github.com/wayneashleyberry/strictenv)
 [![test](https://github.com/wayneashleyberry/strictenv/actions/workflows/test.yaml/badge.svg)](https://github.com/wayneashleyberry/strictenv/actions/workflows/test.yaml)
@@ -49,7 +49,7 @@ errors.Is(err, strictenv.ErrInvalidValue) // true if any variable has the wrong 
 
 `string`, `bool`, `int8`–`int64`, `uint8`–`uint64`, `float32`, `float64`, `time.Duration`, `[]string` (comma-separated).
 
-No maps, no custom decoders, no pointer types. Intentionally minimal.
+Pointer types (`*string`, `*int`, etc.) are supported for optional fields — see below.
 
 ## Testing
 
@@ -70,12 +70,23 @@ func TestConfig(t *testing.T) {
 }
 ```
 
+## Optional fields
+
+Use a pointer type to make a field optional. Missing or empty values result in `nil` instead of an error:
+
+```go
+type Config struct {
+	Required  string  `env:"API_KEY"`
+	Optional  *string `env:"DB_PASSWORD"`
+}
+```
+
 ## Philosophy
 
-- **No defaults.** If a field is tagged, it must be set.
-- **No optional tags.** There is no `required:"true"` because everything is required.
+- **No defaults.** If a field is tagged, it must be set — unless it's a pointer, which defaults to `nil`.
+- **No optional tags.** Use pointer types for optional fields, not tags.
 - **No prefix splitting, no `split_words`, no functional options.** One tag, one value.
-- **Empty counts as missing.** An env var set to `""` is not accepted.
+- **Empty counts as missing.** An env var set to `""` is not accepted (unless the field is a pointer).
 
 This follows the [12-factor app](https://12factor.net/config) approach: env vars are granular, orthogonal controls — not grouped into "environments", not bundled into config files, not hidden behind framework conventions. `strictenv` makes the contract explicit: set it, or the app won't start.
 

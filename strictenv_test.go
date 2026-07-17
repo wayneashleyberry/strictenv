@@ -271,6 +271,99 @@ func TestParseNoTag(t *testing.T) {
 	}
 }
 
+func TestParseOptionalPresent(t *testing.T) {
+	t.Parallel()
+
+	type cfg struct {
+		Name *string `env:"TEST_OPT_NAME"`
+	}
+
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_OPT_NAME": "hello"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got.Name == nil {
+		t.Fatal("expected non-nil pointer")
+	}
+
+	if *got.Name != "hello" {
+		t.Errorf("got %q, want %q", *got.Name, "hello")
+	}
+}
+
+func TestParseOptionalEmpty(t *testing.T) {
+	t.Parallel()
+
+	type cfg struct {
+		Name *string `env:"TEST_OPT_EMPTY"`
+	}
+
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_OPT_EMPTY": ""})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got.Name != nil {
+		t.Errorf("expected nil, got %q", *got.Name)
+	}
+}
+
+func TestParseOptionalMissing(t *testing.T) {
+	t.Parallel()
+
+	type cfg struct {
+		Name *string `env:"TEST_OPT_MISSING"`
+	}
+
+	got, err := ParseAsFrom[cfg](map[string]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got.Name != nil {
+		t.Errorf("expected nil, got %q", *got.Name)
+	}
+}
+
+func TestParseOptionalIntPresent(t *testing.T) {
+	t.Parallel()
+
+	type cfg struct {
+		Port *int `env:"TEST_OPT_PORT"`
+	}
+
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_OPT_PORT": "42"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got.Port == nil {
+		t.Fatal("expected non-nil pointer")
+	}
+
+	if *got.Port != 42 {
+		t.Errorf("got %d, want 42", *got.Port)
+	}
+}
+
+func TestParseOptionalIntEmpty(t *testing.T) {
+	t.Parallel()
+
+	type cfg struct {
+		Port *int `env:"TEST_OPT_PORT_EMPTY"`
+	}
+
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_OPT_PORT_EMPTY": ""})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got.Port != nil {
+		t.Errorf("expected nil, got %d", *got.Port)
+	}
+}
+
 func TestParseAllTypes(t *testing.T) {
 	t.Parallel()
 
