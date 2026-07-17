@@ -1,7 +1,7 @@
 package strictenv
 
 import (
-	"errors"
+	"strings"
 	"testing"
 	"time"
 )
@@ -163,17 +163,8 @@ func TestParseMissing(t *testing.T) {
 		t.Fatal("expected error for missing env var")
 	}
 
-	var me *MissingError
-	if !errors.As(err, &me) {
-		t.Fatalf("expected MissingError, got %T", err)
-	}
-
-	if len(me.Missing) != 1 {
-		t.Fatalf("expected 1 missing, got %d", len(me.Missing))
-	}
-
-	if me.Missing[0].Field != "Name" || me.Missing[0].Env != "TEST_MISSING_VAR" {
-		t.Errorf("wrong missing: %+v", me.Missing[0])
+	if !strings.Contains(err.Error(), "TEST_MISSING_VAR (field Name): value is missing or empty") {
+		t.Errorf("unexpected error: %v", err)
 	}
 }
 
@@ -191,8 +182,8 @@ func TestParseEmpty(t *testing.T) {
 		t.Fatal("expected error for empty env var")
 	}
 
-	if _, ok := errors.AsType[*MissingError](err); !ok {
-		t.Fatalf("expected MissingError, got %T", err)
+	if !strings.Contains(err.Error(), "TEST_EMPTY_VAR (field Name): value is missing or empty") {
+		t.Errorf("unexpected error: %v", err)
 	}
 }
 
@@ -211,13 +202,13 @@ func TestParseMultipleMissing(t *testing.T) {
 		t.Fatal("expected error")
 	}
 
-	var me *MissingError
-	if !errors.As(err, &me) {
-		t.Fatalf("expected MissingError, got %T", err)
+	msg := err.Error()
+	if !strings.Contains(msg, "TEST_MISS_A (field A): value is missing or empty") {
+		t.Errorf("error missing TEST_MISS_A: %v", err)
 	}
 
-	if len(me.Missing) != 2 {
-		t.Errorf("expected 2 missing, got %d", len(me.Missing))
+	if !strings.Contains(msg, "TEST_MISS_B (field B): value is missing or empty") {
+		t.Errorf("error missing TEST_MISS_B: %v", err)
 	}
 }
 

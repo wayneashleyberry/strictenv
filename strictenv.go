@@ -20,37 +20,17 @@ var (
 
 	// ErrUnsupportedType is returned when a field type is not supported.
 	ErrUnsupportedType = errors.New("strictenv: unsupported type")
+
+	// ErrMissingValue is returned when an environment variable is missing or empty.
+	ErrMissingValue = errors.New("value is missing or empty")
+
+	// ErrInvalidValue is returned when an environment variable has an invalid value.
+	ErrInvalidValue = errors.New("value is invalid")
 )
-
-// MissingError reports environment variables that are missing or empty.
-type MissingError struct {
-	Missing []MissingVar
-}
-
-// MissingVar is a single missing environment variable.
-type MissingVar struct {
-	Field string
-	Env   string
-}
-
-func (e *MissingError) Error() string {
-	if len(e.Missing) == 1 {
-		return fmt.Sprintf("missing env var %s (field %s)", e.Missing[0].Env, e.Missing[0].Field)
-	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "missing env vars:")
-
-	for _, m := range e.Missing {
-		fmt.Fprintf(&b, "\n  %s (field %s)", m.Env, m.Field)
-	}
-
-	return b.String()
-}
 
 // Parse populates dst, a pointer to a struct, from environment variables.
 // Every exported field with an "env" tag is required. Missing or empty
-// values are collected and returned as a single error.
+// values and parse errors are collected and returned as a single error.
 func Parse(dst any) error {
 	return ParseFrom(dst, nil)
 }
@@ -66,7 +46,7 @@ func ParseFrom(dst any, env map[string]string) error {
 	v = v.Elem()
 	t := v.Type()
 
-	var missing []MissingVar
+	var errs []error
 
 	for i := range t.NumField() {
 		field := t.Field(i)
@@ -87,22 +67,18 @@ func ParseFrom(dst any, env map[string]string) error {
 		}
 
 		if val == "" {
-			missing = append(missing, MissingVar{Field: field.Name, Env: envKey})
+			errs = append(errs, fmt.Errorf("%s (field %s): %w", envKey, field.Name, ErrMissingValue))
 
 			continue
 		}
 
 		err := setField(v.Field(i), field.Type, val)
 		if err != nil {
-			return fmt.Errorf("strictenv: field %s (env %s): %w", field.Name, envKey, err)
+			errs = append(errs, fmt.Errorf("%s (field %s): %w: %w", envKey, field.Name, ErrInvalidValue, err))
 		}
 	}
 
-	if len(missing) > 0 {
-		return &MissingError{Missing: missing}
-	}
-
-	return nil
+	return errors.Join(errs...)
 }
 
 // ParseAs parses environment variables into a new value of type T.
