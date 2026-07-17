@@ -11,11 +11,12 @@ Inspired by [envconfig](https://github.com/kelseyhightower/envconfig) and [env](
 
 ## Why `strictenv`?
 
-Most Go environment variable parsers fail silently or make assumptions when an environment variable is missing or empty. They silently fall back to Go's type zero-values (`0`, `false`, `""`). 
+Most Go environment variable parsers fail silently or make assumptions when an environment variable is missing or empty. They silently fall back to Go's type zero-values (`0`, `false`, `""`).
 
 This creates a dangerous runtime ambiguity. For example:
-* If `TIMEOUT=""`, does the user want a timeout of `0` (never timeout), or did they just forget to fill it out, intending to use a safe default?
-* If `JWT_SECRET=""`, does your app boot up with an empty string as a signature key, exposing you to critical security vulnerabilities?
+
+- If `TIMEOUT=""`, does the user want a timeout of `0` (never timeout), or did they just forget to fill it out, intending to use a safe default?
+- If `JWT_SECRET=""`, does your app boot up with an empty string as a signature key, exposing you to critical security vulnerabilities?
 
 `strictenv` fixes this by treating environment variables as **deterministic and explicit**. If a variable is declared in your struct, it must exist and be valid—unless you explicitly define it as a pointer.
 
@@ -85,7 +86,7 @@ Because `strictenv` purposefully does not support a default struct tag, default 
 ```go
 cfg := Config{
     // Define your defaults upfront in standard Go
-    Port: 8080, 
+    Port: 8080,
 }
 
 // Any environment variables present will strictly overwrite these values.
