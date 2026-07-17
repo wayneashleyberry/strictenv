@@ -1,12 +1,25 @@
+// Package strictenv provides strict environment variable parsing for Go structs.
 package strictenv
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+)
+
+var (
+	// ErrNotStructPointer is returned when the argument is not a pointer to a struct.
+	ErrNotStructPointer = errors.New("strictenv: argument must be a pointer to a struct")
+
+	// ErrUnsupportedSliceElement is returned when a slice element type is not string.
+	ErrUnsupportedSliceElement = errors.New("strictenv: unsupported slice element type")
+
+	// ErrUnsupportedType is returned when a field type is not supported.
+	ErrUnsupportedType = errors.New("strictenv: unsupported type")
 )
 
 // MissingError reports environment variables that are missing or empty.
@@ -41,7 +54,7 @@ func (e *MissingError) Error() string {
 func Parse(dst any) error {
 	v := reflect.ValueOf(dst)
 	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
-		return fmt.Errorf("strictenv: Parse requires a pointer to a struct, got %T", dst)
+		return fmt.Errorf("%w, got %T", ErrNotStructPointer, dst)
 	}
 
 	v = v.Elem()
@@ -49,7 +62,7 @@ func Parse(dst any) error {
 
 	var missing []MissingVar
 
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		if !field.IsExported() {
 			continue
@@ -95,7 +108,7 @@ func ParseAs[T any]() (T, error) {
 func setField(f reflect.Value, t reflect.Type, val string) error {
 	if t.Kind() == reflect.Slice {
 		if t.Elem().Kind() != reflect.String {
-			return fmt.Errorf("unsupported slice element type %s", t.Elem())
+			return fmt.Errorf("%w: %s", ErrUnsupportedSliceElement, t.Elem())
 		}
 
 		f.Set(reflect.ValueOf(strings.Split(val, ",")))
@@ -109,7 +122,7 @@ func setField(f reflect.Value, t reflect.Type, val string) error {
 	case reflect.Bool:
 		b, err := strconv.ParseBool(val)
 		if err != nil {
-			return err
+			return fmt.Errorf("parse bool: %w", err)
 		}
 
 		f.SetBool(b)
@@ -117,7 +130,7 @@ func setField(f reflect.Value, t reflect.Type, val string) error {
 		if t == reflect.TypeFor[time.Duration]() {
 			d, err := time.ParseDuration(val)
 			if err != nil {
-				return err
+				return fmt.Errorf("parse duration: %w", err)
 			}
 
 			f.SetInt(int64(d))
@@ -127,26 +140,26 @@ func setField(f reflect.Value, t reflect.Type, val string) error {
 
 		n, err := strconv.ParseInt(val, 0, t.Bits())
 		if err != nil {
-			return err
+			return fmt.Errorf("parse int: %w", err)
 		}
 
 		f.SetInt(n)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		n, err := strconv.ParseUint(val, 0, t.Bits())
 		if err != nil {
-			return err
+			return fmt.Errorf("parse uint: %w", err)
 		}
 
 		f.SetUint(n)
 	case reflect.Float32, reflect.Float64:
 		n, err := strconv.ParseFloat(val, t.Bits())
 		if err != nil {
-			return err
+			return fmt.Errorf("parse float: %w", err)
 		}
 
 		f.SetFloat(n)
 	default:
-		return fmt.Errorf("unsupported type %s", t)
+		return fmt.Errorf("%w: %s", ErrUnsupportedType, t)
 	}
 
 	return nil

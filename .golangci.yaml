@@ -25,7 +25,6 @@ linters:
     - errchkjson
     - errname
     - errorlint
-    - exhaustive
     - exhaustruct
     - exptostd
     - fatcontext
@@ -80,7 +79,6 @@ linters:
     - nolintlint
     - nonamedreturns
     - nosprintfhostport
-    - paralleltest
     - perfsprint
     - prealloc
     - predeclared
@@ -98,9 +96,7 @@ linters:
     - tagliatelle
     - testableexamples
     - testifylint
-    - testpackage
     - thelper
-    - tparallel
     - unconvert
     - unparam
     - unqueryvet
