@@ -76,20 +76,6 @@ func main() {
 }
 ```
 
-## How It Works (Strict Evaluation Matrix)
-
-`strictenv` utilizes `os.LookupEnv` under the hood to strictly separate whether a variable is missing, empty, or populated.
-
-| Target Go Type | Environment State | `strictenv` Behavior | Result / Error Example |
-| :--- | :--- | :--- | :--- |
-| **`string`** | `NOT SET` | **Error** | `missing required env var: APP_ENV` |
-| **`string`** | `KEY=""` | **Error** | `env var APP_ENV is set but empty` |
-| **`int`** | `PORT=""` | **Error** | `cannot parse empty string as type int for PORT` |
-| **`int`** | `PORT="abc"` | **Error** | `invalid syntax for type int for PORT` |
-| **`*int`** | `NOT SET` | **Success** | Field is assigned `nil` |
-| **`*int`** | `PORT="0"` | **Success** | Field is assigned a pointer to `0` |
-| **`*string`** | `KEY=""` | **Success** | Field is assigned a pointer to `""` |
-
 ## Best Practices
 
 ### Handling Defaults
