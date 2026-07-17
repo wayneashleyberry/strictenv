@@ -1,6 +1,6 @@
 # strictenv
 
-> Strict environment variable parsing for Go structs. No default values, no surprises.
+> Strict environment variable parsing for Go structs. No default values, no optional tags, no implicit zero-values, no surprises.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/wayneashleyberry/strictenv.svg)](https://pkg.go.dev/github.com/wayneashleyberry/strictenv)
 [![test](https://github.com/wayneashleyberry/strictenv/actions/workflows/test.yaml/badge.svg)](https://github.com/wayneashleyberry/strictenv/actions/workflows/test.yaml)
@@ -9,40 +9,118 @@
 
 Inspired by [envconfig](https://github.com/kelseyhightower/envconfig) and [env](https://github.com/caarlos0/env), but with a very different set of personal opinions. Environment variables should be [simple, explicit, and predictable](https://12factor.net/config). `strictenv` enforces that at startup: if something is missing, you find out immediately, not at 3am when a nil pointer hits production.
 
+## Why `strictenv`?
+
+Most Go environment variable parsers fail silently or make assumptions when an environment variable is missing or empty. They silently fall back to Go's type zero-values (`0`, `false`, `""`). 
+
+This creates a dangerous runtime ambiguity. For example:
+* If `TIMEOUT=""`, does the user want a timeout of `0` (never timeout), or did they just forget to fill it out, intending to use a safe default?
+* If `JWT_SECRET=""`, does your app boot up with an empty string as a signature key, exposing you to critical security vulnerabilities?
+
+`strictenv` fixes this by treating environment variables as **deterministic and explicit**. If a variable is declared in your struct, it must exist and be valid—unless you explicitly define it as a pointer.
+
+## Features
+
+- **No Implicit Zero-Values:** An empty string (`PORT=""`) will fail to parse as an integer rather than defaulting to `0`.
+- **Fail-Fast Initialization:** Clear, highly descriptive errors on application startup so configuration issues never leak into runtime.
+- **Explicit Optionality:** Uses standard Go pointers (`*int`, `*string`) to distinguish between a missing/null value and an explicit zero.
+- **Zero Dependencies:** Built entirely on top of the Go standard library.
+
 ## Install
 
 ```sh
 go get github.com/wayneashleyberry/strictenv
 ```
 
-## Usage
+## Quick start
 
 ```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/wayneashleyberry/strictenv"
+)
+
 type Config struct {
-	Host string `env:"APP_HOST"`
-	Port int    `env:"APP_PORT"`
+	// Required fields (Value must be present and valid)
+	Env         string        `env:"APP_ENV"`
+	Port        int           `env:"PORT"`
+	Debug       bool          `env:"DEBUG"`
+	Timeout     time.Duration `env:"TIMEOUT"`
+
+	// Optional fields (Uses pointers to safely handle missing/empty values)
+	DatabaseURL *string       `env:"DATABASE_URL"`
+	MaxConns    *int          `env:"MAX_CONNECTIONS"`
 }
 
-cfg, err := strictenv.ParseAs[Config]()
-if err != nil {
-	log.Fatal(err)
+func main() {
+	var cfg Config
+
+	// Parse environment variables directly into the struct
+	if err := strictenv.Parse(&cfg); err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
+
+	fmt.Printf("App booted in %s mode on port %d\n", cfg.Env, cfg.Port)
+
+	// Safely consume optional pointer values
+	if cfg.MaxConns != nil {
+		fmt.Printf("Max connections limited to: %d\n", *cfg.MaxConns)
+	} else {
+		fmt.Println("Max connections: unlimited")
+	}
 }
 ```
 
-If `APP_HOST` or `APP_PORT` is missing, empty, or contains a value that is invalid, `Parse` returns a single error listing every problem:
+## How It Works (Strict Evaluation Matrix)
 
-```
-APP_HOST (field Host): value is missing or empty
-APP_PORT (field Port): value is invalid: strconv.ParseInt: parsing "banana": invalid syntax
-```
+`strictenv` utilizes `os.LookupEnv` under the hood to strictly separate whether a variable is missing, empty, or populated.
 
-All issues are reported at once — missing variables, invalid values, and type mismatches — so you can fix everything in one pass.
+| Target Go Type | Environment State | `strictenv` Behavior | Result / Error Example |
+| :--- | :--- | :--- | :--- |
+| **`string`** | `NOT SET` | **Error** | `missing required env var: APP_ENV` |
+| **`string`** | `KEY=""` | **Error** | `env var APP_ENV is set but empty` |
+| **`int`** | `PORT=""` | **Error** | `cannot parse empty string as type int for PORT` |
+| **`int`** | `PORT="abc"` | **Error** | `invalid syntax for type int for PORT` |
+| **`*int`** | `NOT SET` | **Success** | Field is assigned `nil` |
+| **`*int`** | `PORT="0"` | **Success** | Field is assigned a pointer to `0` |
+| **`*string`** | `KEY=""` | **Success** | Field is assigned a pointer to `""` |
 
-Check for specific error types with `errors.Is`:
+## Best Practices
+
+### Handling Defaults
+
+Because `strictenv` purposefully does not support a default struct tag, default configuration logic should live explicitly in your application code where it is visible and testable:
 
 ```go
-errors.Is(err, strictenv.ErrMissingValue) // true if any variable is missing or empty
-errors.Is(err, strictenv.ErrInvalidValue) // true if any variable has the wrong type
+cfg := Config{
+    // Define your defaults upfront in standard Go
+    Port: 8080, 
+}
+
+// Any environment variables present will strictly overwrite these values.
+// Any missing non-pointer fields will throw an error.
+if err := strictenv.Parse(&cfg); err != nil {
+    log.Fatalf("Invalid config: %v", err)
+}
+```
+
+### Avoiding Nil Pointer Dereferences
+
+When using optional fields (pointers), always perform a `nil` check before extracting the value to prevent runtime panics:
+
+```go
+// Bad: Might panic if DATABASE_URL was missing from the environment
+connect(*cfg.DatabaseURL)
+
+// Good: Checked and handled explicitly
+if cfg.DatabaseURL != nil {
+    connect(*cfg.DatabaseURL)
+}
 ```
 
 ## Supported types
@@ -69,26 +147,6 @@ func TestConfig(t *testing.T) {
 	// ...
 }
 ```
-
-## Optional fields
-
-Use a pointer type to make a field optional. Missing or empty values result in `nil` instead of an error:
-
-```go
-type Config struct {
-	Required  string  `env:"API_KEY"`
-	Optional  *string `env:"DB_PASSWORD"`
-}
-```
-
-## Philosophy
-
-- **No defaults.** If a field is tagged, it must be set — unless it's a pointer, which defaults to `nil`.
-- **No optional tags.** Use pointer types for optional fields, not tags.
-- **No prefix splitting, no `split_words`, no functional options.** One tag, one value.
-- **Empty counts as missing.** An env var set to `""` is not accepted (unless the field is a pointer).
-
-This follows the [12-factor app](https://12factor.net/config) approach: env vars are granular, orthogonal controls — not grouped into "environments", not bundled into config files, not hidden behind framework conventions. `strictenv` makes the contract explicit: set it, or the app won't start.
 
 ## Benchmarks
 
