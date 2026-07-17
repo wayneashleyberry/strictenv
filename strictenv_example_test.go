@@ -16,7 +16,7 @@ type exampleOptionalConfig struct {
 func ExampleParseAsFrom() {
 	cfg, err := ParseAsFrom[exampleConfig](map[string]string{
 		"APP_HOST": "localhost",
-		"APP_PORT": "8080", //nolint:goconst
+		"APP_PORT": "8080",
 	})
 	if err != nil {
 		fmt.Println("error:", err)

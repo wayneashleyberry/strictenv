@@ -69,7 +69,9 @@ func ParseFrom(dst any, env map[string]string) error {
 		if field.Type.Kind() == reflect.Pointer {
 			if val != "" {
 				inner := reflect.New(field.Type.Elem())
-				if err := setField(inner.Elem(), field.Type.Elem(), val); err != nil {
+
+				err := setField(inner.Elem(), field.Type.Elem(), val)
+				if err != nil {
 					errs = append(errs, fmt.Errorf("%s (field %s): %w: %w", envKey, field.Name, ErrInvalidValue, err))
 
 					continue
