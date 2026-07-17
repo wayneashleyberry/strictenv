@@ -78,3 +78,23 @@ func TestConfig(t *testing.T) {
 - **Empty counts as missing.** An env var set to `""` is not accepted.
 
 This follows the [12-factor app](https://12factor.net/config) approach: env vars are granular, orthogonal controls — not grouped into "environments", not bundled into config files, not hidden behind framework conventions. `strictenv` makes the contract explicit: set it, or the app won't start.
+
+## Benchmarks
+
+Comparison of `strictenv` vs `caarlos0/env` parsing a 6-field struct (string, int, bool, float64, time.Duration, []string) from a map.
+
+```
+goos: darwin
+goarch: arm64
+pkg: github.com/wayneashleyberry/strictenv
+cpu: Apple M2 Pro
+```
+
+| Benchmark            | ns/op | B/op | allocs/op |
+| -------------------- | ----- | ---- | --------- |
+| `Strictenv`          | 478   | 72   | 2         |
+| `StrictenvGeneric`   | 508   | 152  | 3         |
+| `Caarlos0Env`        | 5807  | 7560 | 81        |
+| `Caarlos0EnvGeneric` | 5838  | 7640 | 82        |
+
+`strictenv` is ~12× faster and uses ~50× fewer allocations.
