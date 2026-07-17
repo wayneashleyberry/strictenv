@@ -81,7 +81,7 @@ This follows the [12-factor app](https://12factor.net/config) approach: env vars
 
 ## Benchmarks
 
-Comparison of `strictenv` vs `caarlos0/env` parsing a 6-field struct (string, int, bool, float64, time.Duration, []string) from a map.
+Comparison of `strictenv` vs `caarlos0/env` parsing a 6-field struct (`string`, `int`, `bool`, `float64`, `time.Duration`, `[]string`) from a map.
 
 ```
 goos: darwin
