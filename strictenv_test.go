@@ -200,10 +200,10 @@ func TestParseNonStructPointer(t *testing.T) {
 
 func TestParseUnexportedField(t *testing.T) {
 	type cfg struct {
-		visible string `env:"TEST_UNEXPORTED"`
-		OK      string `env:"TEST_OK"`
+		visible string // nolint: unused
+		OK      string `env:"TEST_UNEXP_OK"`
 	}
-	t.Setenv("TEST_OK", "yes")
+	t.Setenv("TEST_UNEXP_OK", "yes")
 	got, err := ParseAs[cfg]()
 	if err != nil {
 		t.Fatal(err)

@@ -37,7 +37,7 @@ func (e *MissingError) Error() string {
 // values are collected and returned as a single error.
 func Parse(dst any) error {
 	v := reflect.ValueOf(dst)
-	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("strictenv: Parse requires a pointer to a struct, got %T", dst)
 	}
 	v = v.Elem()
