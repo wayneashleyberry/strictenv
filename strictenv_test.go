@@ -6,31 +6,33 @@ import (
 	"time"
 )
 
+const testVal = "hello"
+
 func TestParseString(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Name string `env:"TEST_NAME"`
 	}
 
-	t.Setenv("TEST_NAME", "hello")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_NAME": testVal})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if got.Name != "hello" {
-		t.Errorf("got %q, want %q", got.Name, "hello")
+	if got.Name != testVal {
+		t.Errorf("got %q, want %q", got.Name, testVal)
 	}
 }
 
 func TestParseBool(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Verbose bool `env:"TEST_VERBOSE"`
 	}
 
-	t.Setenv("TEST_VERBOSE", "true")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_VERBOSE": "true"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,13 +43,13 @@ func TestParseBool(t *testing.T) {
 }
 
 func TestParseInt(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Port int `env:"TEST_PORT"`
 	}
 
-	t.Setenv("TEST_PORT", "8080")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_PORT": "8080"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,6 +60,8 @@ func TestParseInt(t *testing.T) {
 }
 
 func TestParseIntSizes(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		A int8   `env:"TEST_INT8"`
 		B int16  `env:"TEST_INT16"`
@@ -70,17 +74,17 @@ func TestParseIntSizes(t *testing.T) {
 		I uint64 `env:"TEST_UINT64"`
 	}
 
-	t.Setenv("TEST_INT8", "127")
-	t.Setenv("TEST_INT16", "32000")
-	t.Setenv("TEST_INT32", "2000000")
-	t.Setenv("TEST_INT64", "9000000000")
-	t.Setenv("TEST_UINT", "42")
-	t.Setenv("TEST_UINT8", "255")
-	t.Setenv("TEST_UINT16", "65535")
-	t.Setenv("TEST_UINT32", "4000000")
-	t.Setenv("TEST_UINT64", "9000000000")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{
+		"TEST_INT8":   "127",
+		"TEST_INT16":  "32000",
+		"TEST_INT32":  "2000000",
+		"TEST_INT64":  "9000000000",
+		"TEST_UINT":   "42",
+		"TEST_UINT8":  "255",
+		"TEST_UINT16": "65535",
+		"TEST_UINT32": "4000000",
+		"TEST_UINT64": "9000000000",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,13 +99,13 @@ func TestParseIntSizes(t *testing.T) {
 }
 
 func TestParseFloat(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Rate float64 `env:"TEST_RATE"`
 	}
 
-	t.Setenv("TEST_RATE", "3.14")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_RATE": "3.14"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,13 +116,13 @@ func TestParseFloat(t *testing.T) {
 }
 
 func TestParseDuration(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Timeout time.Duration `env:"TEST_TIMEOUT"`
 	}
 
-	t.Setenv("TEST_TIMEOUT", "5s")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_TIMEOUT": "5s"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,13 +133,13 @@ func TestParseDuration(t *testing.T) {
 }
 
 func TestParseStringSlice(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Tags []string `env:"TEST_TAGS"`
 	}
 
-	t.Setenv("TEST_TAGS", "a,b,c")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_TAGS": "a,b,c"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,13 +150,15 @@ func TestParseStringSlice(t *testing.T) {
 }
 
 func TestParseMissing(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Name string `env:"TEST_MISSING_VAR"`
 	}
 
 	var c cfg
 
-	err := Parse(&c)
+	err := ParseFrom(&c, nil)
 	if err == nil {
 		t.Fatal("expected error for missing env var")
 	}
@@ -172,15 +178,15 @@ func TestParseMissing(t *testing.T) {
 }
 
 func TestParseEmpty(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Name string `env:"TEST_EMPTY_VAR"`
 	}
 
-	t.Setenv("TEST_EMPTY_VAR", "")
-
 	var c cfg
 
-	err := Parse(&c)
+	err := ParseFrom(&c, map[string]string{"TEST_EMPTY_VAR": ""})
 	if err == nil {
 		t.Fatal("expected error for empty env var")
 	}
@@ -191,6 +197,8 @@ func TestParseEmpty(t *testing.T) {
 }
 
 func TestParseMultipleMissing(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		A string `env:"TEST_MISS_A"`
 		B string `env:"TEST_MISS_B"`
@@ -198,7 +206,7 @@ func TestParseMultipleMissing(t *testing.T) {
 
 	var c cfg
 
-	err := Parse(&c)
+	err := ParseFrom(&c, nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -214,21 +222,23 @@ func TestParseMultipleMissing(t *testing.T) {
 }
 
 func TestParseInvalidValue(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Port int `env:"TEST_BAD_PORT"`
 	}
 
-	t.Setenv("TEST_BAD_PORT", "abc")
-
 	var c cfg
 
-	err := Parse(&c)
+	err := ParseFrom(&c, map[string]string{"TEST_BAD_PORT": "abc"})
 	if err == nil {
 		t.Fatal("expected error for invalid int")
 	}
 }
 
 func TestParseNonStructPointer(t *testing.T) {
+	t.Parallel()
+
 	s := "not a struct"
 
 	err := Parse(&s)
@@ -238,14 +248,14 @@ func TestParseNonStructPointer(t *testing.T) {
 }
 
 func TestParseUnexportedField(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		visible string //nolint: unused
 		OK      string `env:"TEST_UNEXP_OK"`
 	}
 
-	t.Setenv("TEST_UNEXP_OK", "yes")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{"TEST_UNEXP_OK": "yes"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -256,6 +266,8 @@ func TestParseUnexportedField(t *testing.T) {
 }
 
 func TestParseNoTag(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Ignored string
 	}
@@ -269,6 +281,8 @@ func TestParseNoTag(t *testing.T) {
 }
 
 func TestParseAllTypes(t *testing.T) {
+	t.Parallel()
+
 	type cfg struct {
 		Str  string        `env:"TEST_ALL_STR"`
 		Bool bool          `env:"TEST_ALL_BOOL"`
@@ -279,20 +293,20 @@ func TestParseAllTypes(t *testing.T) {
 		Sli  []string      `env:"TEST_ALL_SLI"`
 	}
 
-	t.Setenv("TEST_ALL_STR", "hello")
-	t.Setenv("TEST_ALL_BOOL", "1")
-	t.Setenv("TEST_ALL_INT", "42")
-	t.Setenv("TEST_ALL_UINT", "42")
-	t.Setenv("TEST_ALL_FLT", "1.5")
-	t.Setenv("TEST_ALL_DUR", "10m")
-	t.Setenv("TEST_ALL_SLI", "x,y")
-
-	got, err := ParseAs[cfg]()
+	got, err := ParseAsFrom[cfg](map[string]string{
+		"TEST_ALL_STR": testVal,
+		"TEST_ALL_BOOL": "1",
+		"TEST_ALL_INT":  "42",
+		"TEST_ALL_UINT": "42",
+		"TEST_ALL_FLT":  "1.5",
+		"TEST_ALL_DUR":  "10m",
+		"TEST_ALL_SLI":  "x,y",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if got.Str != "hello" {
+	if got.Str != testVal {
 		t.Errorf("Str: got %q", got.Str)
 	}
 

@@ -52,6 +52,12 @@ func (e *MissingError) Error() string {
 // Every exported field with an "env" tag is required. Missing or empty
 // values are collected and returned as a single error.
 func Parse(dst any) error {
+	return ParseFrom(dst, nil)
+}
+
+// ParseFrom populates dst, a pointer to a struct, from the provided env map.
+// If env is nil, the real process environment is read via os.Getenv.
+func ParseFrom(dst any, env map[string]string) error {
 	v := reflect.ValueOf(dst)
 	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("%w, got %T", ErrNotStructPointer, dst)
@@ -73,7 +79,13 @@ func Parse(dst any) error {
 			continue
 		}
 
-		val := os.Getenv(envKey)
+		var val string
+		if env != nil {
+			val = env[envKey]
+		} else {
+			val = os.Getenv(envKey)
+		}
+
 		if val == "" {
 			missing = append(missing, MissingVar{Field: field.Name, Env: envKey})
 
@@ -98,6 +110,18 @@ func ParseAs[T any]() (T, error) {
 	var zero T
 
 	err := Parse(&zero)
+	if err != nil {
+		return zero, err
+	}
+
+	return zero, nil
+}
+
+// ParseAsFrom parses the provided env map into a new value of type T.
+func ParseAsFrom[T any](env map[string]string) (T, error) {
+	var zero T
+
+	err := ParseFrom(&zero, env)
 	if err != nil {
 		return zero, err
 	}
