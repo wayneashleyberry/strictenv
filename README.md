@@ -2,6 +2,7 @@
 
 > Strict environment variable parsing for Go structs. No default values, no optional fields, no surprises.
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/wayneashleyberry/strictenv.svg)](https://pkg.go.dev/github.com/wayneashleyberry/strictenv)
 [![test](https://github.com/wayneashleyberry/strictenv/actions/workflows/test.yaml/badge.svg)](https://github.com/wayneashleyberry/strictenv/actions/workflows/test.yaml)
 [![lint](https://github.com/wayneashleyberry/strictenv/actions/workflows/lint.yaml/badge.svg)](https://github.com/wayneashleyberry/strictenv/actions/workflows/lint.yaml)
 [![fmt](https://github.com/wayneashleyberry/strictenv/actions/workflows/fmt.yaml/badge.svg)](https://github.com/wayneashleyberry/strictenv/actions/workflows/fmt.yaml)
