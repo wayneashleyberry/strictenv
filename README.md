@@ -26,6 +26,7 @@ This creates a dangerous runtime ambiguity. For example:
 - **Fail-Fast Initialization:** Clear, highly descriptive errors on application startup so configuration issues never leak into runtime.
 - **Explicit Optionality:** Uses standard Go pointers (`*int`, `*string`) to distinguish between a missing/null value and an explicit zero.
 - **Zero Dependencies:** Built entirely on top of the Go standard library.
+- **Supported Types:** `string`, `bool`, `int8`–`int64`, `uint8`–`uint64`, `float32`, `float64`, `time.Duration`, `[]string` (comma-separated).
 
 ## Install
 
@@ -109,12 +110,6 @@ if cfg.DatabaseURL != nil {
     connect(*cfg.DatabaseURL)
 }
 ```
-
-## Supported types
-
-`string`, `bool`, `int8`–`int64`, `uint8`–`uint64`, `float32`, `float64`, `time.Duration`, `[]string` (comma-separated).
-
-Pointer types (`*string`, `*int`, etc.) are supported for optional fields — see below.
 
 ## Testing
 
