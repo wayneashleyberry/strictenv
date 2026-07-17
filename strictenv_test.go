@@ -154,8 +154,7 @@ func TestParseEmpty(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for empty env var")
 	}
-	var me *MissingError
-	if !errors.As(err, &me) {
+	if _, ok := errors.AsType[*MissingError](err); !ok {
 		t.Fatalf("expected MissingError, got %T", err)
 	}
 }

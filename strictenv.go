@@ -101,7 +101,7 @@ func setField(f reflect.Value, t reflect.Type, val string) error {
 		}
 		f.SetBool(b)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		if t == reflect.TypeOf(time.Duration(0)) {
+		if t == reflect.TypeFor[time.Duration]() {
 			d, err := time.ParseDuration(val)
 			if err != nil {
 				return err
