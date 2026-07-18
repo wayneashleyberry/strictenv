@@ -60,10 +60,8 @@ type Config struct {
 }
 
 func main() {
-	var cfg Config
-
-	// Parse environment variables directly into the struct
-	if err := strictenv.Parse(&cfg); err != nil {
+	cfg, err := strictenv.ParseAs[Config]()
+	if err != nil {
 		log.Fatalf("Configuration error: %v", err)
 	}
 
