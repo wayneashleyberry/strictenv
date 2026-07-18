@@ -130,20 +130,17 @@ func TestConfig(t *testing.T) {
 
 ## Benchmarks
 
-Comparison of `strictenv` vs `caarlos0/env` parsing a 6-field struct (`string`, `int`, `bool`, `float64`, `time.Duration`, `[]string`) from a map.
+| Library                                                                   |   ns/op |   B/op | allocs/op |
+| ------------------------------------------------------------------------- | ------: | -----: | --------: |
+| **strictenv**                                                             | **452** | **64** |     **1** |
+| [syntaqx/env](https://github.com/syntaqx/env)                             |   1,255 |    436 |        15 |
+| [vrischmann/envconfig](https://github.com/vrischmann/envconfig)           |   1,381 |    576 |        19 |
+| [go-simpler/env](https://github.com/junk1tm/env)                          |   1,560 |  1,856 |        19 |
+| [cleanenv](https://github.com/ilyakaznacheev/cleanenv)                    |   2,300 |  2,488 |        41 |
+| [kelseyhightower/envconfig](https://github.com/kelseyhightower/envconfig) |   2,567 |  1,544 |        62 |
+| [caarlos0/env](https://github.com/caarlos0/env)                           |   5,624 |  7,280 |        71 |
+| [cristalhq/aconfig](https://github.com/cristalhq/aconfig)                 |   6,135 |  5,754 |       125 |
 
-```
-goos: darwin
-goarch: arm64
-pkg: github.com/wayneashleyberry/strictenv
-cpu: Apple M2 Pro
-```
+`strictenv` is the fastest and most memory-efficient Go env parser benchmarked — **3–13× faster** and **7–113× less memory** than alternatives, with a single allocation per parse.
 
-| Benchmark            | ns/op | B/op | allocs/op |
-| -------------------- | ----- | ---- | --------- |
-| `Strictenv`          | 478   | 72   | 2         |
-| `StrictenvGeneric`   | 508   | 152  | 3         |
-| `Caarlos0Env`        | 5807  | 7560 | 81        |
-| `Caarlos0EnvGeneric` | 5838  | 7640 | 82        |
-
-`strictenv` is ~12× faster and uses ~50× fewer allocations.
+> Full benchmarks and methodology: [strictenv-benchmarks](https://github.com/wayneashleyberry/strictenv-benchmarks)
