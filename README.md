@@ -80,16 +80,23 @@ func main() {
 
 ### Handling Defaults
 
-Because `strictenv` purposefully does not support a default struct tag, default configuration logic should live explicitly in your application code where it is visible and testable:
+Because `strictenv` purposefully does not support a default struct tag, default configuration logic should live explicitly in your application code where it is visible and testable.
+
+Note that this only works with **pointer** fields. Non-pointer fields are always required: if the env var is missing or empty, `Parse` returns `ErrMissingValue` regardless of any value you preset on the struct, since there is no way to distinguish "left as the zero value" from "deliberately defaulted".
 
 ```go
-cfg := Config{
-    // Define your defaults upfront in standard Go
-    Port: 8080,
+type Config struct {
+    Port *int `env:"PORT"` // optional, falls back to the preset default below
 }
 
-// Any environment variables present will strictly overwrite these values.
-// Any missing non-pointer fields will throw an error.
+port := 8080
+cfg := Config{
+    // Define your defaults upfront in standard Go
+    Port: &port,
+}
+
+// PORT, if present in the environment, overwrites the default.
+// If PORT is absent, cfg.Port keeps pointing at the preset value.
 if err := strictenv.Parse(&cfg); err != nil {
     log.Fatalf("Invalid config: %v", err)
 }
