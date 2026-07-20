@@ -26,7 +26,7 @@ This creates a dangerous runtime ambiguity. For example:
 - **Fail-Fast Initialization:** Clear, highly descriptive errors on application startup so configuration issues never leak into runtime.
 - **Explicit Optionality:** Uses standard Go pointers (`*int`, `*string`) to distinguish between a missing/null value and an explicit zero.
 - **Zero Dependencies:** Built entirely on top of the Go standard library.
-- **Supported Types:** `string`, `bool`, `int8`–`int64`, `uint8`–`uint64`, `float32`, `float64`, `time.Duration`, `[]string` (comma-separated).
+- **Supported Types:** `string`, `bool`, `int`, `int8`–`int64`, `uint`, `uint8`–`uint64`, `float32`, `float64`, `time.Duration`, `[]string` (comma-separated).
 
 ## Install
 
@@ -125,8 +125,10 @@ func TestConfig(t *testing.T) {
 	t.Parallel()
 
 	cfg, err := strictenv.ParseAsFrom[Config](map[string]string{
-		"APP_HOST": "localhost",
-		"APP_PORT": "8080",
+		"APP_ENV": "test",
+		"PORT":    "8080",
+		"DEBUG":   "true",
+		"TIMEOUT": "5s",
 	})
 	if err != nil {
 		t.Fatal(err)
