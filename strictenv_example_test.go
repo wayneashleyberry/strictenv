@@ -158,10 +158,10 @@ type exampleDefaultConfig struct {
 }
 
 func ExampleParseFrom_defaults() {
-	port := 8080
+	defaultPort := 8080
 	cfg := exampleDefaultConfig{
 		Host: "localhost",
-		Port: &port,
+		Port: &defaultPort,
 	}
 
 	// Only APP_HOST is required. APP_PORT overrides the default if present.

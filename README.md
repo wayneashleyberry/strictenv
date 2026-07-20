@@ -90,11 +90,10 @@ type Config struct {
     Port *int   `env:"APP_PORT"` // optional, falls back to the preset default below
 }
 
-port := 8080
+defaultPort := 8080
 cfg := Config{
-    Host: "localhost",
     // Define your defaults upfront in standard Go
-    Port: &port,
+    Port: &defaultPort,
 }
 
 // APP_PORT, if present in the environment, overwrites the default.
