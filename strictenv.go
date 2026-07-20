@@ -29,8 +29,9 @@ var (
 )
 
 // Parse populates dst, a pointer to a struct, from environment variables.
-// Every exported field with an "env" tag is required. Missing or empty
-// values and parse errors are collected and returned as a single error.
+// Every exported non-pointer field with an "env" tag is required; pointer
+// fields are optional. Missing or empty values and parse errors are
+// collected and returned as a single error.
 func Parse(dst any) error {
 	return ParseFrom(dst, nil)
 }

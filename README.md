@@ -26,7 +26,7 @@ This creates a dangerous runtime ambiguity. For example:
 - **Fail-Fast Initialization:** Clear, highly descriptive errors on application startup so configuration issues never leak into runtime.
 - **Explicit Optionality:** Uses standard Go pointers (`*int`, `*string`) to distinguish between a missing/null value and an explicit zero.
 - **Zero Dependencies:** Built entirely on top of the Go standard library.
-- **Supported Types:** `string`, `bool`, `int8`–`int64`, `uint8`–`uint64`, `float32`, `float64`, `time.Duration`, `[]string` (comma-separated).
+- **Supported Types:** `string`, `bool`, `int`, `int8`–`int64`, `uint`, `uint8`–`uint64`, `float32`, `float64`, `time.Duration`, `[]string` (comma-separated).
 
 ## Install
 
@@ -80,16 +80,25 @@ func main() {
 
 ### Handling Defaults
 
-Because `strictenv` purposefully does not support a default struct tag, default configuration logic should live explicitly in your application code where it is visible and testable:
+Because `strictenv` purposefully does not support a default struct tag, default configuration logic should live explicitly in your application code where it is visible and testable.
+
+Note that this only works with **pointer** fields. Non-pointer fields are always required: if the env var is missing or empty, `Parse` returns `ErrMissingValue` regardless of any value you preset on the struct, since there is no way to distinguish "left as the zero value" from "deliberately defaulted".
 
 ```go
-cfg := Config{
-    // Define your defaults upfront in standard Go
-    Port: 8080,
+type Config struct {
+    Host string `env:"APP_HOST"`
+    Port *int   `env:"APP_PORT"` // optional, falls back to the preset default below
 }
 
-// Any environment variables present will strictly overwrite these values.
-// Any missing non-pointer fields will throw an error.
+port := 8080
+cfg := Config{
+    Host: "localhost",
+    // Define your defaults upfront in standard Go
+    Port: &port,
+}
+
+// APP_PORT, if present in the environment, overwrites the default.
+// If APP_PORT is absent, cfg.Port keeps pointing at the preset value.
 if err := strictenv.Parse(&cfg); err != nil {
     log.Fatalf("Invalid config: %v", err)
 }
@@ -118,8 +127,10 @@ func TestConfig(t *testing.T) {
 	t.Parallel()
 
 	cfg, err := strictenv.ParseAsFrom[Config](map[string]string{
-		"APP_HOST": "localhost",
-		"APP_PORT": "8080",
+		"APP_ENV": "test",
+		"PORT":    "8080",
+		"DEBUG":   "true",
+		"TIMEOUT": "5s",
 	})
 	if err != nil {
 		t.Fatal(err)
