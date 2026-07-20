@@ -1,6 +1,9 @@
 package strictenv
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type exampleConfig struct {
 	Host string `env:"APP_HOST"`
@@ -85,6 +88,68 @@ func ExampleParseAsFrom_optionalField() {
 	// Output:
 	// Host: localhost
 	// DBPassword: not set
+}
+
+// exampleQuickStartConfig mirrors the Config struct in the README's Quick
+// Start section, so that example stays backed by a real, tested example.
+type exampleQuickStartConfig struct {
+	Env         string        `env:"APP_ENV"`
+	Port        int           `env:"PORT"`
+	Debug       bool          `env:"DEBUG"`
+	Timeout     time.Duration `env:"TIMEOUT"`
+	DatabaseURL *string       `env:"DATABASE_URL"`
+	MaxConns    *int          `env:"MAX_CONNECTIONS"`
+}
+
+func ExampleParseAsFrom_quickStart() {
+	cfg, err := ParseAsFrom[exampleQuickStartConfig](map[string]string{
+		"APP_ENV": "production",
+		"PORT":    "8080",
+		"DEBUG":   "false",
+		"TIMEOUT": "30s",
+	})
+	if err != nil {
+		fmt.Println("error:", err)
+
+		return
+	}
+
+	fmt.Printf("App booted in %s mode on port %d\n", cfg.Env, cfg.Port)
+
+	if cfg.MaxConns != nil {
+		fmt.Printf("Max connections limited to: %d\n", *cfg.MaxConns)
+	} else {
+		fmt.Println("Max connections: unlimited")
+	}
+	// Output:
+	// App booted in production mode on port 8080
+	// Max connections: unlimited
+}
+
+func ExampleParseAsFrom_quickStartMaxConns() {
+	cfg, err := ParseAsFrom[exampleQuickStartConfig](map[string]string{
+		"APP_ENV":         "production",
+		"PORT":            "8080",
+		"DEBUG":           "false",
+		"TIMEOUT":         "30s",
+		"MAX_CONNECTIONS": "100",
+	})
+	if err != nil {
+		fmt.Println("error:", err)
+
+		return
+	}
+
+	fmt.Printf("App booted in %s mode on port %d\n", cfg.Env, cfg.Port)
+
+	if cfg.MaxConns != nil {
+		fmt.Printf("Max connections limited to: %d\n", *cfg.MaxConns)
+	} else {
+		fmt.Println("Max connections: unlimited")
+	}
+	// Output:
+	// App booted in production mode on port 8080
+	// Max connections limited to: 100
 }
 
 type exampleDefaultConfig struct {

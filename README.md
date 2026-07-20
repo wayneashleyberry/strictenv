@@ -86,17 +86,19 @@ Note that this only works with **pointer** fields. Non-pointer fields are always
 
 ```go
 type Config struct {
-    Port *int `env:"PORT"` // optional, falls back to the preset default below
+    Host string `env:"APP_HOST"`
+    Port *int   `env:"APP_PORT"` // optional, falls back to the preset default below
 }
 
 port := 8080
 cfg := Config{
+    Host: "localhost",
     // Define your defaults upfront in standard Go
     Port: &port,
 }
 
-// PORT, if present in the environment, overwrites the default.
-// If PORT is absent, cfg.Port keeps pointing at the preset value.
+// APP_PORT, if present in the environment, overwrites the default.
+// If APP_PORT is absent, cfg.Port keeps pointing at the preset value.
 if err := strictenv.Parse(&cfg); err != nil {
     log.Fatalf("Invalid config: %v", err)
 }
